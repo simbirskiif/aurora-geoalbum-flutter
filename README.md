@@ -1,4 +1,4 @@
-# GeoAlbum — Географический фотоальбом
+# GeoAlbum — Географический фотоальбом для Aurora OS
 
 ![Flutter](https://img.shields.io/badge/Flutter-3.27+-blue?logo=flutter)
 ![Aurora OS](https://img.shields.io/badge/Aurora%20OS-5.0%2B-green)
