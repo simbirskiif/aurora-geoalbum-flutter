@@ -1,9 +1,9 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/image_location.dart';
-import 'package:flutter_application_1/image_store.dart';
-import 'package:flutter_application_1/photo_view.dart';
+import 'package:geo_album/image_location.dart';
+import 'package:geo_album/image_store.dart';
+import 'package:geo_album/photo_view.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:latlong2/latlong.dart';
@@ -96,8 +96,7 @@ class _MainState extends State<Main> {
         home: Scaffold(
           bottomNavigationBar: NavigationBar(
             destinations: const <Widget>[
-              NavigationDestination(
-                  icon: Icon(Icons.image), label: "Списком"),
+              NavigationDestination(icon: Icon(Icons.image), label: "Списком"),
               NavigationDestination(icon: Icon(Icons.map), label: "На карте")
             ],
             selectedIndex: _selectedScreen,

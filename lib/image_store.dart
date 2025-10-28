@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/image_location.dart';
+import 'package:geo_album/image_location.dart';
 
 class ImageManager extends ChangeNotifier {
   List<ImageLocation> _images = [];

@@ -4,7 +4,7 @@
 # PSDK_MAJOR             - Build psdk major version
 
 cmake_minimum_required(VERSION 3.10)
-project(com.example.flutter_application_1 LANGUAGES CXX)
+project(com.example.GeoAlbum LANGUAGES CXX)
 
 include(GNUInstallDirs)
 
