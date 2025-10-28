@@ -20,6 +20,7 @@ class _PhotoViewScreenState extends State<PhotoViewScreen> {
   Widget build(BuildContext context) {
     final filePath = widget.imageLocation.path;
     final file = File(filePath);
+    bool isLoading = true;
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -44,7 +45,7 @@ class _PhotoViewScreenState extends State<PhotoViewScreen> {
                     Icon(
                       Icons.broken_image,
                       size: 50,
-                      color: Colors.grey,
+                      color: Colors.red,
                     )
                   ],
                 ),
@@ -62,7 +63,44 @@ class _PhotoViewScreenState extends State<PhotoViewScreen> {
                         child: Image.file(
                           file,
                           fit: BoxFit.contain,
+                          frameBuilder:
+                              (context, child, frame, wasSynchronouslyLoaded) {
+                            // if (frame != null && isLoading) {
+                            //   WidgetsBinding.instance.addPostFrameCallback((_) {
+                            //     setState(() {
+                            //       isLoading = false;
+                            //       debugPrint("Загружено");
+                            //     });
+                            //   });
+                            // }
+                            // return child;
+
+                            // if (wasSynchronouslyLoaded) {
+                            //   return child;
+                            // }
+                            // return AnimatedOpacity(
+                            //   opacity:
+                            //       frame == null ? 0 : 1, // Постепенно проявляем
+                            //   duration: const Duration(seconds: 1),
+                            //   curve: Curves.easeOut,
+                            //   child: child,
+                            // );
+                            if (frame == null) {
+                              return const Center(
+                                  child: CircularProgressIndicator(
+                                color: Colors.white,
+                              ));
+                            }
+                            return child;
+                          },
                           errorBuilder: (context, error, stackTrace) {
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              if (mounted && isLoading) {
+                                setState(() {
+                                  isLoading = false;
+                                });
+                              }
+                            });
                             return Center(
                               child: Padding(
                                 padding: EdgeInsets.all(20),
@@ -72,7 +110,7 @@ class _PhotoViewScreenState extends State<PhotoViewScreen> {
                                     Icon(
                                       Icons.broken_image,
                                       size: 50,
-                                      color: Colors.grey,
+                                      color: Colors.red,
                                     )
                                   ],
                                 ),
@@ -81,6 +119,13 @@ class _PhotoViewScreenState extends State<PhotoViewScreen> {
                           },
                         )),
                   ),
+                  // if (isLoading && !hasError)
+                  //   Container(
+                  //     alignment: Alignment.center,
+                  //     child: CircularProgressIndicator(
+                  //       color: Colors.white,
+                  //     ),
+                  //   ),
                   Positioned(
                       left: 00,
                       right: 0,

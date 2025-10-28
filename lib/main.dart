@@ -88,6 +88,7 @@ class _MainState extends State<Main> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+        debugShowCheckedModeBanner: false,
         themeMode: ThemeMode.system,
         theme: ThemeData(
             useMaterial3: true,
