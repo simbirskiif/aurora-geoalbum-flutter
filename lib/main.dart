@@ -435,6 +435,7 @@ class _MapScreenState extends State<MapScreen> {
                   },
                   child: Text("+"),
                 ),
+                SizedBox(height: 10,),
                 FloatingActionButton(
                   onPressed: () {
                     setState(() {
