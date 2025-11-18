@@ -43,7 +43,7 @@ Future<List<ImageLocation>> fromPaths(List<String> paths) async {
         final stat = await file.stat();
         creationDate = stat.modified;
       } catch (e) {
-        // debugPrint('Ошибка получения даты для $path: $e');
+        // a
       }
 
       if (data.isNotEmpty) {
@@ -54,7 +54,6 @@ Future<List<ImageLocation>> fromPaths(List<String> paths) async {
 
         lat = _convertToDegree(latData, latRef);
         lon = _convertToDegree(lonData, lonRef);
-        // debugPrint('Извлечённые координаты для $path: lat=$lat, lon=$lon');
       }
       result.add(ImageLocation(
         path: path,
@@ -128,14 +127,10 @@ Future<List<String>> findImagePathsRecursive() async {
     final Directory picturesDir = Directory(picturesPath);
 
     if (await picturesDir.exists()) {
-      debugPrint("Начинаем рекурсивный поиск в: $picturesPath");
-
       await _searchDirectory(picturesDir, imagePaths);
-    } else {
-      debugPrint("Директория не найдена: $picturesPath");
-    }
-  } on FileSystemException catch (e) {
-    debugPrint("Ошибка доступа к файловой системе: $e");
+    } else {}
+  } on FileSystemException {
+    debugPrint("err");
   }
 
   debugPrint("Найдено ${imagePaths.length} изображений.");
@@ -159,7 +154,7 @@ Future<void> _searchDirectory(
         await _searchDirectory(entity, imagePaths);
       }
     }
-  } on FileSystemException catch (e) {
-    debugPrint("Ошибка доступа к директории ${directory.path}: $e");
+  } on FileSystemException {
+    debugPrint("perm err");
   }
 }
