@@ -52,9 +52,9 @@ class _GalleryScreenState extends State<GalleryScreen> {
                   );
                 } else {
                   return GridView.builder(
-                    shrinkWrap: true, // занимает только нужное место
+                    shrinkWrap: true, 
                     physics:
-                        const NeverScrollableScrollPhysics(), // скролл только у Column
+                        const NeverScrollableScrollPhysics(), 
                     itemCount: value.images.length,
                     padding: const EdgeInsets.all(8),
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
