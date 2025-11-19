@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:exif/exif.dart';
 import 'package:flutter/foundation.dart';
+import 'package:geo_album/models/image_location.dart';
 // ignore: depend_on_referenced_packages
 import 'package:path_provider/path_provider.dart';
 
@@ -9,21 +10,6 @@ List<ImageLocation> images = List.empty(growable: true);
 
 Future<void> startFind() async {
   // List<String> paths = await findImagePathsRecursive();
-}
-
-class ImageLocation {
-  final String path;
-  final double? latitude;
-  final double? longitude;
-  final DateTime? creationDate;
-
-  ImageLocation(
-      {required this.path, this.latitude, this.longitude, this.creationDate});
-
-  @override
-  String toString() {
-    return 'Path: $path, Lat: ${latitude ?? 'N/A'}, Lon: ${longitude ?? 'N/A'}';
-  }
 }
 
 Future<List<ImageLocation>> fromPaths(List<String> paths) async {
@@ -66,7 +52,7 @@ Future<List<ImageLocation>> fromPaths(List<String> paths) async {
     }
   }
 
-  result.sort((a, b) {
+  result.sort((b, a) {
     if (a.creationDate == null && b.creationDate == null) return 0;
     if (a.creationDate == null) return 1;
     if (b.creationDate == null) return -1;

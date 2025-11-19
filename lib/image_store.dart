@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:geo_album/image_location.dart';
+import 'package:geo_album/utils/image_location_utils.dart';
+import 'package:geo_album/models/image_location.dart';
 
 class ImageManager extends ChangeNotifier {
   List<ImageLocation> _images = [];
@@ -18,6 +19,17 @@ class ImageManager extends ChangeNotifier {
       notifyListeners();
     } finally {
       _isUpdating = false;
+    }
+  }
+
+  void updateImage(ImageLocation oldImg, ImageLocation newImg) {
+    final index = _images.indexWhere((img) {
+      return img.path == oldImg.path;
+    });
+    if (index != -1) {
+      _images[index] = newImg;
+      notifyListeners();
+      findAndUpdateImages();
     }
   }
 }

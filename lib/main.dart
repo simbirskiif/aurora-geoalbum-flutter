@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:geo_album/image_location.dart';
+import 'package:geo_album/utils/image_location_utils.dart';
 import 'package:geo_album/image_store.dart';
 import 'package:geo_album/screens/gallery_screen.dart';
 import 'package:geo_album/screens/map_screen.dart';
 import 'package:provider/provider.dart';
+import 'package:responsive_navigation_bar/responsive_navigation_bar.dart';
 
 void main() {
   runApp(ChangeNotifierProvider(
@@ -45,9 +46,7 @@ class _MainState extends State<Main> {
   void initState() {
     super.initState();
 
-    WidgetsBinding.instance.addPostFrameCallback((_) =>
-        Provider.of<ImageManager>(context, listen: false)
-            .findAndUpdateImages());
+    load();
   }
 
   Future<void> load() async {
@@ -69,18 +68,20 @@ class _MainState extends State<Main> {
         debugShowCheckedModeBanner: false,
         themeMode: ThemeMode.system,
         theme: ThemeData(
-            floatingActionButtonTheme: FloatingActionButtonThemeData(),
-            useMaterial3: true,
-            primarySwatch: Colors.deepOrange,
-            primaryColor: Colors.deepOrange),
+          floatingActionButtonTheme: FloatingActionButtonThemeData(),
+          useMaterial3: true,
+        ),
         home: Scaffold(
-          bottomNavigationBar: NavigationBar(
-            destinations: const <Widget>[
-              NavigationDestination(icon: Icon(Icons.image), label: "Списком"),
-              NavigationDestination(icon: Icon(Icons.map), label: "На карте")
+          extendBody: true,
+          bottomNavigationBar: ResponsiveNavigationBar(
+            textStyle: TextStyle(color: Colors.white),
+            inactiveButtonsFlexFactor: 100,
+            navigationBarButtons: const <NavigationBarButton>[
+              NavigationBarButton(icon: Icons.image, text: "Списком"),
+              NavigationBarButton(icon: Icons.map, text: "На карте")
             ],
             selectedIndex: _selectedScreen,
-            onDestinationSelected: (value) {
+            onTabChange: (value) {
               setState(() {
                 _selectedScreen = value;
               });
@@ -96,10 +97,12 @@ class _MainState extends State<Main> {
                   icon: Icon(Icons.restart_alt))
             ],
           ),
-          body: IndexedStack(
-            index: _selectedScreen,
-            children: _screens,
-          ),
+          body: SafeArea(
+              bottom: false,
+              child: IndexedStack(
+                index: _selectedScreen,
+                children: _screens,
+              )),
         ));
   }
 }

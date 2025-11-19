@@ -1,10 +1,14 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:geo_album/image_location.dart';
-import 'package:geo_album/photo_view.dart';
+import 'package:geo_album/image_store.dart';
+import 'package:geo_album/models/image_location.dart';
+import 'package:geo_album/screens/photo_view_screen.dart';
 import 'package:geo_album/screens/gallery_screen.dart';
+import 'package:geo_album/utils/rename_dialog.dart';
+import 'package:provider/provider.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
-class ImageItem extends StatelessWidget {
+class ImageItem extends StatefulWidget {
   const ImageItem({
     super.key,
     required this.widget,
@@ -15,35 +19,64 @@ class ImageItem extends StatelessWidget {
   final ImageLocation image;
 
   @override
+  State<ImageItem> createState() => _ImageItemState();
+}
+
+class _ImageItemState extends State<ImageItem> {
+  @override
   Widget build(BuildContext context) {
-    return GridTile(
-        child: GestureDetector(
+    final file = File(widget.image.path);
+    if (!file.existsSync() || file.lengthSync() == 0) {
+      return Skeletonizer(
+          ignorePointers: true,
+          ignoreContainers: true,
+          enabled: true,
+          child: SizedBox(
+            width: 100,
+            height: 100,
+            child: DecoratedBox(decoration: BoxDecoration(color: Colors.red)),
+          ));
+    }
+    return GestureDetector(
+      onLongPress: () async {
+        bool renamed = await showRenameDialog(context, file);
+        if (!mounted) return;
+        if(renamed & mounted){
+          ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text("Файл переименован")));
+          WidgetsBinding.instance.addPostFrameCallback((_) =>
+            Provider.of<ImageManager>(context, listen: false)
+                .findAndUpdateImages());
+        }
+      },
       onTap: () {
         Navigator.push(context, MaterialPageRoute(builder: (context) {
           return PhotoViewScreen(
               goToMap: () {
-                widget.goToMap!(image);
+                widget.widget.goToMap!(widget.image);
               },
-              imageLocation: image);
+              imageLocation: widget.image);
         }));
       },
       child: Stack(
         children: [
-          // Center(
-          //   child: CircularProgressIndicator(),
-          // ),
           Positioned.fill(
               child: Image.file(
-            File(image.path),
+            File(widget.image.path),
             fit: BoxFit.cover,
             cacheWidth: 150,
             frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
               return frame == null
-                  ? Center(
-                      child: CircularProgressIndicator(
-                        color: Colors.black,
-                      ),
-                    )
+                  ? Skeletonizer(
+                      ignorePointers: true,
+                      ignoreContainers: true,
+                      enabled: true,
+                      child: SizedBox(
+                        width: 100,
+                        height: 100,
+                        child: DecoratedBox(
+                            decoration: BoxDecoration(color: Colors.red)),
+                      ))
                   : child;
             },
             errorBuilder: (context, error, stackTrace) => const Icon(
@@ -70,13 +103,13 @@ class ImageItem extends StatelessWidget {
             child: Padding(
               padding: EdgeInsets.only(bottom: 8, left: 3),
               child: Text(
-                image.path.split("/").last,
+                widget.image.path.split("/").last,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(color: Colors.white, fontSize: 10),
               ),
             ),
           ),
-          image.latitude == null && image.longitude == null
+          widget.image.latitude == null && widget.image.longitude == null
               ? Positioned(
                   top: 5,
                   right: 5,
@@ -87,6 +120,6 @@ class ImageItem extends StatelessWidget {
               : Text("")
         ],
       ),
-    ));
+    );
   }
 }
