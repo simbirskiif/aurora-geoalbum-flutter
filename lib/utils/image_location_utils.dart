@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:exif/exif.dart';
 import 'package:flutter/foundation.dart';
+import 'package:geo_album/models/image_location.dart';
 // ignore: depend_on_referenced_packages
 import 'package:path_provider/path_provider.dart';
 
@@ -9,21 +10,6 @@ List<ImageLocation> images = List.empty(growable: true);
 
 Future<void> startFind() async {
   // List<String> paths = await findImagePathsRecursive();
-}
-
-class ImageLocation {
-  final String path;
-  final double? latitude;
-  final double? longitude;
-  final DateTime? creationDate;
-
-  ImageLocation(
-      {required this.path, this.latitude, this.longitude, this.creationDate});
-
-  @override
-  String toString() {
-    return 'Path: $path, Lat: ${latitude ?? 'N/A'}, Lon: ${longitude ?? 'N/A'}';
-  }
 }
 
 Future<List<ImageLocation>> fromPaths(List<String> paths) async {
@@ -43,7 +29,7 @@ Future<List<ImageLocation>> fromPaths(List<String> paths) async {
         final stat = await file.stat();
         creationDate = stat.modified;
       } catch (e) {
-        // debugPrint('Ошибка получения даты для $path: $e');
+        // a
       }
 
       if (data.isNotEmpty) {
@@ -54,7 +40,6 @@ Future<List<ImageLocation>> fromPaths(List<String> paths) async {
 
         lat = _convertToDegree(latData, latRef);
         lon = _convertToDegree(lonData, lonRef);
-        // debugPrint('Извлечённые координаты для $path: lat=$lat, lon=$lon');
       }
       result.add(ImageLocation(
         path: path,
@@ -67,7 +52,7 @@ Future<List<ImageLocation>> fromPaths(List<String> paths) async {
     }
   }
 
-  result.sort((a, b) {
+  result.sort((b, a) {
     if (a.creationDate == null && b.creationDate == null) return 0;
     if (a.creationDate == null) return 1;
     if (b.creationDate == null) return -1;
@@ -128,14 +113,10 @@ Future<List<String>> findImagePathsRecursive() async {
     final Directory picturesDir = Directory(picturesPath);
 
     if (await picturesDir.exists()) {
-      debugPrint("Начинаем рекурсивный поиск в: $picturesPath");
-
       await _searchDirectory(picturesDir, imagePaths);
-    } else {
-      debugPrint("Директория не найдена: $picturesPath");
-    }
-  } on FileSystemException catch (e) {
-    debugPrint("Ошибка доступа к файловой системе: $e");
+    } else {}
+  } on FileSystemException {
+    debugPrint("err");
   }
 
   debugPrint("Найдено ${imagePaths.length} изображений.");
@@ -159,7 +140,7 @@ Future<void> _searchDirectory(
         await _searchDirectory(entity, imagePaths);
       }
     }
-  } on FileSystemException catch (e) {
-    debugPrint("Ошибка доступа к директории ${directory.path}: $e");
+  } on FileSystemException {
+    debugPrint("perm err");
   }
 }

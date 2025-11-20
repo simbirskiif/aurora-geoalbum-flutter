@@ -1,9 +1,14 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:geo_album/image_location.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:geo_album/models/image_location.dart';
+import 'package:geo_album/screens/editor_screen.dart';
+import 'package:geo_album/image_store.dart';
+import 'package:geo_album/utils/rename_dialog.dart';
+import 'package:geo_album/widgets/row_default.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 class PhotoViewScreen extends StatefulWidget {
   final ImageLocation imageLocation;
@@ -16,10 +21,59 @@ class PhotoViewScreen extends StatefulWidget {
 }
 
 class _PhotoViewScreenState extends State<PhotoViewScreen> {
+  bool isBroken = true;
+
+  Future<void> _checkIfImageIsValid() async {
+    final path = widget.imageLocation.path;
+    final file = File(path);
+    final exists = await file.exists();
+    if (!exists) {
+      if (mounted) {
+        setState(() {
+          isBroken = true;
+        });
+      }
+      return;
+    }
+    final length = await file.length();
+    if (length == 0) {
+      if (mounted) {
+        setState(() {
+          isBroken = true;
+        });
+      }
+      return;
+    }
+    try {
+      final bytes = await file.readAsBytes();
+      await decodeImageFromList(bytes); // flutter/painting.dart
+
+      if (mounted) {
+        setState(() {
+          isBroken = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          isBroken = true;
+        });
+      }
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _checkIfImageIsValid();
+  }
+
   @override
   Widget build(BuildContext context) {
     final filePath = widget.imageLocation.path;
     final file = File(filePath);
+    final fileImage = FileImage(file);
+    fileImage.evict();
     bool isLoading = true;
     return Scaffold(
       appBar: AppBar(
@@ -28,6 +82,17 @@ class _PhotoViewScreenState extends State<PhotoViewScreen> {
           style: TextStyle(fontSize: 14),
         ),
         actions: [
+          isBroken
+              ? Text("")
+              : IconButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    Navigator.of(context)
+                        .push(MaterialPageRoute(builder: (context) {
+                      return EditorScreen(img: widget.imageLocation);
+                    }));
+                  },
+                  icon: Icon(Icons.crop)),
           IconButton(
               onPressed: () {
                 showInfo(widget.imageLocation);
@@ -65,29 +130,10 @@ class _PhotoViewScreenState extends State<PhotoViewScreen> {
                           fit: BoxFit.contain,
                           frameBuilder:
                               (context, child, frame, wasSynchronouslyLoaded) {
-                            // if (frame != null && isLoading) {
-                            //   WidgetsBinding.instance.addPostFrameCallback((_) {
-                            //     setState(() {
-                            //       isLoading = false;
-                            //       debugPrint("Загружено");
-                            //     });
-                            //   });
-                            // }
-                            // return child;
-
-                            // if (wasSynchronouslyLoaded) {
-                            //   return child;
-                            // }
-                            // return AnimatedOpacity(
-                            //   opacity:
-                            //       frame == null ? 0 : 1, // Постепенно проявляем
-                            //   duration: const Duration(seconds: 1),
-                            //   curve: Curves.easeOut,
-                            //   child: child,
-                            // );
                             if (frame == null) {
                               return const Center(
-                                  child: CircularProgressIndicator(
+                                  child: SpinKitWave(
+                                    size: 50,
                                 color: Colors.white,
                               ));
                             }
@@ -119,13 +165,19 @@ class _PhotoViewScreenState extends State<PhotoViewScreen> {
                           },
                         )),
                   ),
-                  // if (isLoading && !hasError)
-                  //   Container(
-                  //     alignment: Alignment.center,
-                  //     child: CircularProgressIndicator(
-                  //       color: Colors.white,
-                  //     ),
-                  //   ),
+                  Align(
+                    alignment: Alignment.bottomCenter,
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 125,
+                      child: DecoratedBox(
+                          decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [Colors.transparent, Colors.black]))),
+                    ),
+                  ),
                   Positioned(
                       left: 00,
                       right: 0,
@@ -135,7 +187,7 @@ class _PhotoViewScreenState extends State<PhotoViewScreen> {
                         child: Row(
                           children: [
                             Expanded(
-                                flex: 1,
+                                flex: 10,
                                 child: MaterialButton(
                                   onPressed: () {
                                     Navigator.pop(context);
@@ -148,7 +200,7 @@ class _PhotoViewScreenState extends State<PhotoViewScreen> {
                             widget.imageLocation.latitude != null &&
                                     widget.imageLocation.longitude != null
                                 ? Expanded(
-                                    flex: 1,
+                                    flex: 10,
                                     child: MaterialButton(
                                       onPressed: () {
                                         widget.goToMap!();
@@ -159,7 +211,32 @@ class _PhotoViewScreenState extends State<PhotoViewScreen> {
                                         style: TextStyle(color: Colors.white),
                                       ),
                                     ))
-                                : Text("")
+                                : Text(""),
+                            Expanded(
+                                flex: 2,
+                                child: IconButton(
+                                    icon: Icon(
+                                      Icons.drive_file_rename_outline_sharp,
+                                      color: Colors.white,
+                                    ),
+                                    onPressed: () async {
+                                      bool renamed =
+                                          await showRenameDialog(context, file);
+                                      if (!mounted) return;
+                                      if (renamed & mounted) {
+                                        Navigator.pop(context);
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(SnackBar(
+                                                content:
+                                                    Text("Файл переименован")));
+                                        WidgetsBinding.instance
+                                            .addPostFrameCallback((_) =>
+                                                Provider.of<ImageManager>(
+                                                        context,
+                                                        listen: false)
+                                                    .findAndUpdateImages());
+                                      }
+                                    }))
                           ],
                         ),
                       ))
@@ -180,18 +257,24 @@ class _PhotoViewScreenState extends State<PhotoViewScreen> {
                 SizedBox(
                   height: 25,
                 ),
-                _row(Icons.folder, "Путь", imageLocation.path),
-                _row(
-                    Icons.date_range,
-                    "Создан",
-                    imageLocation.creationDate != null
+                RowDefault(
+                    icon: Icons.folder,
+                    title: "Путь",
+                    value: imageLocation.path),
+                RowDefault(
+                    icon: Icons.date_range,
+                    title: "Создан",
+                    value: imageLocation.creationDate != null
                         ? DateFormat("dd.MM.yyyy в HH:mm")
                             .format(imageLocation.creationDate!)
                         : "Неизвестно"),
                 imageLocation.latitude != null &&
                         imageLocation.longitude != null
-                    ? _row(Icons.location_on, "Локация",
-                        "${imageLocation.latitude != null && imageLocation.longitude != null ? "${imageLocation.latitude?.toStringAsFixed(6)} ${imageLocation.longitude?.toStringAsFixed(6)}" : "Неизвестно"} ")
+                    ? RowDefault(
+                        icon: Icons.location_on,
+                        title: "Локация",
+                        value:
+                            "${imageLocation.latitude != null && imageLocation.longitude != null ? "${imageLocation.latitude?.toStringAsFixed(6)} ${imageLocation.longitude?.toStringAsFixed(6)}" : "Неизвестно"} ")
                     : Text(""),
                 // _row(Icons.warning, "Геолокация недоступна. Изображение не отображается на экране карты", ""),
                 imageLocation.latitude == null &&
@@ -229,44 +312,5 @@ class _PhotoViewScreenState extends State<PhotoViewScreen> {
             ),
           );
         });
-  }
-
-  Widget _row(IconData icon, String title, String value) {
-    return GestureDetector(
-      onLongPress: () {
-        debugPrint("Скопировано в буфер обмена");
-        Clipboard.setData(ClipboardData(text: title));
-      },
-      child: Padding(
-        padding: EdgeInsets.symmetric(vertical: 4),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(
-              icon,
-              size: 18,
-              color: Colors.blueGrey,
-            ),
-            SizedBox(
-              width: 12,
-            ),
-            SizedBox(
-              width: 100,
-              child: Text(
-                title,
-                style:
-                    TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
-              ),
-            ),
-            Expanded(
-                child: Text(
-              value,
-              style: TextStyle(color: Colors.black54),
-              softWrap: true,
-            ))
-          ],
-        ),
-      ),
-    );
   }
 }
